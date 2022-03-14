@@ -890,6 +890,19 @@ If INTERACTIVE is nil the function acts like a capf."
               :annotation-function (funcall extra-fun :annotation-function)
               :exit-function (lambda (x s) (funcall (funcall extra-fun :exit-function) x s)))))))
 
+;;;###autoload
+(progn
+  (defun cape-lazy-super-capf (capfs &optional super-capf-symbol)
+    "Like `cape-super-capf' but doesn't load `cape' when called.
+With non-nil SUPER-CAPF-NAME, assign the merged capf function to
+it and only define once."
+    (let ((merged-capf (or super-capf-symbol (gensym "cape-super-capf--"))))
+      (unless (fboundp merged-capf)
+        (fset merged-capf (lambda ()
+                            (fset merged-capf (apply #'cape-super-capf capfs))
+                            (funcall merged-capf))))
+      merged-capf)))
+
 (defun cape--company-call (&rest app)
   "Apply APP and handle future return values."
   ;; Backends are non-interruptible. Disable interrupts!
