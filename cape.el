@@ -818,8 +818,7 @@ If INTERACTIVE is nil the function acts like a capf."
 ;;;; Capf combinators
 
 ;;;###autoload
-(defun cape-super-capf (&rest capfs)
-  "Merge CAPFS and return new Capf which includes all candidates."
+(defun cape--super-capf (&rest capfs)
   (lambda ()
     (when-let (results (delq nil (mapcar #'funcall capfs)))
       (pcase-let* ((`((,beg ,end . ,_)) results)
@@ -889,6 +888,16 @@ If INTERACTIVE is nil the function acts like a capf."
               :company-kind (funcall extra-fun :company-kind)
               :annotation-function (funcall extra-fun :annotation-function)
               :exit-function (lambda (x s) (funcall (funcall extra-fun :exit-function) x s)))))))
+
+;;;###autoload
+(progn
+  (defun cape-super-capf (&rest capfs)
+    "Merge CAPFS and return new Capf which includes all candidates."
+    (let ((merged-capf (gensym "cape-super-capf--")))
+      (fset merged-capf (lambda ()
+                          (fset merged-capf (apply #'cape--super-capfly #'cape capfs))
+                          (funcall merged-capf)))
+      merged-capf)))
 
 (defun cape--company-call (&rest app)
   "Apply APP and handle future return values."
